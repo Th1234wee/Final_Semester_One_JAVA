@@ -165,6 +165,7 @@ public class DoctorAppointmentProject {
                         switch(subOption){
                             case 1 -> {
                                 System.out.println("");
+                                
                             }
                         }
                     }while(subOption != 3);
