@@ -34,8 +34,8 @@ public class DoctorAppointmentProject {
         Connection connection = null;
 //        DoctorList doctorList = null;
         //declare variable 
-        byte option;
-        byte subOption;
+        byte option = 0;
+        byte subOption = 0;
         int numspaces = 10;
         String spaces = String.format("%"+ numspaces + "s", "");
         //db connection required
@@ -143,12 +143,13 @@ public class DoctorAppointmentProject {
                                                 
                                                 int rowEffected = statement2.executeUpdate();
                                                 System.out.println("Row Effected " + rowEffected);
-                                            } catch (Exception e) {
+                                            } catch (SQLException e) {
                                                 System.out.println("Error\n");
                                             }
                                         }
                                     }
                                 } catch (Exception e) {
+                                    System.out.println("Error : "+ e.getMessage());
                                 }
                             }
                             default -> System.out.print("Invaild Choice\n");
@@ -156,6 +157,17 @@ public class DoctorAppointmentProject {
                     } while (subOption != 5);   
                 }
                 case 2 -> {
+                    do{
+                        System.out.println("===============> Patient's Appointment Preparing <==============\n");
+                        System.out.println("1. Making Appointment");
+                        System.out.println("2. Start Appointment");
+                        System.out.print("Your Choice = "); subOption = scanner.nextByte();
+                        switch(subOption){
+                            case 1 -> {
+                                System.out.println("");
+                            }
+                        }
+                    }while(subOption != 3);
                 }
             }
         } while (option != 3);
