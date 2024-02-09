@@ -3,10 +3,10 @@ package doctorappointmentproject;
 
 //library
 import java.sql.*;
+import java.time.LocalTime;
 import java.util.Scanner;
 
 public class DoctorAppointmentProject {
-
     /**
      *
      * @param connection
@@ -28,11 +28,29 @@ public class DoctorAppointmentProject {
             System.out.println(e.getMessage()+"Error ...");
         }
     }
-    public static void main(String[] args) {
+    public static void SearchForAvailableDoctor(Connection connection,String time,String specs){
+        String queryRead = "SELECT * FROM `doctor` WHERE 1";
+        try(Statement statement = connection.createStatement()) {
+            LocalTime Time = LocalTime.parse(time);
+            ResultSet resultSet = statement.executeQuery(queryRead);
+            while(resultSet.next()){
+                LocalTime startTime = LocalTime.parse(resultSet.getString("start_work"));
+                LocalTime endTime   = LocalTime.parse(resultSet.getString("end_work"));
+                if(Time.isAfter(startTime) && Time.isBefore(endTime) &&  (specs.compareToIgnoreCase(resultSet.getString("speciality")) == 0)){
+                    System.out.println("\nDoctor's Name = " + resultSet.getString("name") + "  /Speciality  = " + resultSet.getString("speciality"));
+                } 
+                else{
+                    System.out.println("No Available Doctor For This Condition");
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error : "+ e.getMessage());
+        }
+    }
+    public static void main(String[] args){
         //initialize require object 
         Scanner scanner = new Scanner(System.in).useDelimiter("\n");
         Connection connection = null;
-//        DoctorList doctorList = null;
         //declare variable 
         byte option = 0;
         byte subOption = 0;
@@ -72,13 +90,13 @@ public class DoctorAppointmentProject {
                         switch(subOption){
                             case 1 -> {
                                 System.out.print("Please Register Doctor's Information Below : \n");
-                                System.out.print("1. Name        = "); String name   = scanner.next();
-                                System.out.print("2. Gender      = "); String gender = scanner.next();
-                                System.out.print("3. Phone       = "); String phone  = scanner.next();
-                                System.out.print("4. Email       = "); String email  = scanner.next();
-                                System.out.print("5. Speciality  = "); String specs  = scanner.next();
-                                System.out.print("6. Start Time  = "); String start  = scanner.next();
-                                System.out.print("7. End Time    = "); String end    = scanner.next();
+                                System.out.print("1. Name               = "); String name   = scanner.next();
+                                System.out.print("2. Gender             = "); String gender = scanner.next();
+                                System.out.print("3. Phone              = "); String phone  = scanner.next();
+                                System.out.print("4. Email              = "); String email  = scanner.next();
+                                System.out.print("5. Speciality         = "); String specs  = scanner.next();
+                                System.out.print("6. Start Time(MM:SS)  = "); String start  = scanner.next();
+                                System.out.print("7. End Time(MM:SS)    = "); String end    = scanner.next();   
                                 DoctorList doctorList = new DoctorList(name, gender, phone, email, specs, start, end);
                                 doctorList.InsertDoctorIntoDB(connection);
                             }
@@ -142,7 +160,7 @@ public class DoctorAppointmentProject {
                                                 statement2.setInt(1, id);
                                                 
                                                 int rowEffected = statement2.executeUpdate();
-                                                System.out.println("Row Effected " + rowEffected);
+                                                System.out.println("Row Effected = " + rowEffected);
                                             } catch (SQLException e) {
                                                 System.out.println("Error\n");
                                             }
@@ -158,14 +176,27 @@ public class DoctorAppointmentProject {
                 }
                 case 2 -> {
                     do{
-                        System.out.println("===============> Patient's Appointment Preparing <==============\n");
+                        System.out.println("===============> Patient's Appointment Preparation <==============\n");
                         System.out.println("1. Making Appointment");
                         System.out.println("2. Start Appointment");
+                        System.out.println("==================================================================");
                         System.out.print("Your Choice = "); subOption = scanner.nextByte();
                         switch(subOption){
                             case 1 -> {
-                                System.out.println("");
-                                
+                                System.out.println("For Registration's Requirement Please Provide Us a Valid Information : ");
+                                System.out.print("1. Name                               = "); String name     = scanner.next();
+                                System.out.print("2. Gender                             = "); String gender   = scanner.next();
+                                System.out.print("3. Phone                              = "); String phone    = scanner.next();
+                                System.out.print("4. Disease's Description              = "); String disease  = scanner.next();
+                                System.out.print("5. Time for Appointment(MM:SS)        = "); String time     = scanner.next();
+                                System.out.println("------------------------------------------------------------------------");
+                                System.out.print("Please Wait A Moment , We set everything ready for you...!");
+                                try {
+                                    Thread.sleep(5000);
+                                } catch (InterruptedException e) {
+                                    System.out.println("error : " + e.getMessage());
+                                }
+                                SearchForAvailableDoctor(connection, time, disease);
                             }
                         }
                     }while(subOption != 3);
