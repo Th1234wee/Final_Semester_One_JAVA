@@ -4,6 +4,7 @@ package doctorappointmentproject;
 //library
 import java.sql.*;
 import java.time.LocalTime;
+import java.util.Random;
 import java.util.Scanner;
 
 public class DoctorAppointmentProject {
@@ -28,7 +29,8 @@ public class DoctorAppointmentProject {
             System.out.println(e.getMessage()+"Error ...");
         }
     }
-    public static void SearchForAvailableDoctor(Connection connection,String time,String specs){
+    public static void SearchForAvailableDoctor(Connection connection,String name,String gender,String phone,String time,String specs){
+        Random random = new Random();
         String queryRead = "SELECT * FROM `doctor` WHERE 1";
         try(Statement statement = connection.createStatement()) {
             LocalTime Time = LocalTime.parse(time);
@@ -37,11 +39,28 @@ public class DoctorAppointmentProject {
                 LocalTime startTime = LocalTime.parse(resultSet.getString("start_work"));
                 LocalTime endTime   = LocalTime.parse(resultSet.getString("end_work"));
                 if(Time.isAfter(startTime) && Time.isBefore(endTime) &&  (specs.compareToIgnoreCase(resultSet.getString("speciality")) == 0)){
-                    System.out.println("\nDoctor's Name = " + resultSet.getString("name") + "  /Speciality  = " + resultSet.getString("speciality"));
+                    System.out.println("\nYour Appoinment will be start by following information : ");
+                    System.out.println("-------------------------------------------------------------------------------\n");
+                    System.out.println("The doctor that will handle this appoinment : "+resultSet.getString("name")+"\n");
+                    int generatedCode = random.nextInt(99999);
+                    System.out.println("Your Appointment code is : " + generatedCode + "\n");
+                    System.out.println("Please Bring it when you come to appointment\n");
+                    System.out.println("-------------------------------------------------------------------------------\n");
+                    String insertIntoTablePatientQuery = "INSERT INTO `patient`(`name`, `gender`, `phone`, `disease`, `appointment_time`,`appointment_code`,`doctor_id`) VALUES (?,?,?,?,?,?,?)";
+                    try(PreparedStatement preparedStatement = connection.prepareStatement(insertIntoTablePatientQuery)) {
+                        preparedStatement.setString(1, name);
+                        preparedStatement.setString(2, gender);
+                        preparedStatement.setString(3, phone);
+                        preparedStatement.setString(4, specs);
+                        preparedStatement.setString(5, time);
+                        preparedStatement.setInt(6, generatedCode);
+                        preparedStatement.setString(7, resultSet.getString("id"));
+                        preparedStatement.executeUpdate();
+                        System.out.println("Information is synced with Database");
+                    } catch (SQLException e) {
+                        System.out.println("Error : " + e.getMessage());
+                    }
                 } 
-                else{
-                    System.out.println("No Available Doctor For This Condition");
-                }
             }
         } catch (Exception e) {
             System.out.println("Error : "+ e.getMessage());
@@ -85,6 +104,7 @@ public class DoctorAppointmentProject {
                         System.out.print("2. List Of Doctor's Information\n");
                         System.out.print("3. Edit Doctor's Information\n");
                         System.out.print("4. Remove Doctor's Information\n");
+                        System.out.print("5.Exit\n");
                         System.out.print("==========================================================\n");
                         System.out.print("Your Choice = "); subOption = scanner.nextByte();
                         switch(subOption){
@@ -99,11 +119,13 @@ public class DoctorAppointmentProject {
                                 System.out.print("7. End Time(MM:SS)    = "); String end    = scanner.next();   
                                 DoctorList doctorList = new DoctorList(name, gender, phone, email, specs, start, end);
                                 doctorList.InsertDoctorIntoDB(connection);
+                                break;
                             }
                             case 2 -> {
                                 System.out.print("\t\t\t\t\t\tList All Doctor's Information\n");
                                 System.out.print("\n"+spaces+ "ID" + spaces + "Name" + spaces + "Gender" + spaces + "Phone Number" + spaces + "Email" + spaces + "Speciality" + spaces + "Start Time" + spaces + "End Time" + spaces + "IsAvailibity\n");                                
                                 GetDataFromDB(connection, spaces);
+                                break;
                             }
                             case 3 -> {
                                 System.out.print("\t\t\t\t\t\tEdit Doctor's Information\n");
@@ -144,6 +166,7 @@ public class DoctorAppointmentProject {
                                 } catch (Exception e) {
                                     System.out.print(e.getMessage());
                                 }
+                                break;
                             }
                             case 4 -> {
                                
@@ -169,6 +192,10 @@ public class DoctorAppointmentProject {
                                 } catch (Exception e) {
                                     System.out.println("Error : "+ e.getMessage());
                                 }
+                                break;
+                            }
+                            case 5->{
+                                System.exit(0);
                             }
                             default -> System.out.print("Invaild Choice\n");
                         }
@@ -179,6 +206,7 @@ public class DoctorAppointmentProject {
                         System.out.println("===============> Patient's Appointment Preparation <==============\n");
                         System.out.println("1. Making Appointment");
                         System.out.println("2. Start Appointment");
+                        System.out.println("3. Exit");
                         System.out.println("==================================================================");
                         System.out.print("Your Choice = "); subOption = scanner.nextByte();
                         switch(subOption){
@@ -196,7 +224,39 @@ public class DoctorAppointmentProject {
                                 } catch (InterruptedException e) {
                                     System.out.println("error : " + e.getMessage());
                                 }
-                                SearchForAvailableDoctor(connection, time, disease);
+                                SearchForAvailableDoctor(connection,name,gender,phone, time, disease);
+                                break;
+                            }
+                            case 2 -> {
+                                String query = "SELECT * FROM `patient` WHERE 1";
+                                System.out.print("Please Provide Your Appointment Code = "); int code = scanner.nextInt();
+                                try(Statement statement = connection.createStatement()) {
+                                    ResultSet resultSet = statement.executeQuery(query);
+                                    while(resultSet.next()){
+                                        if(code == resultSet.getInt("appointment_code")){
+                                            System.out.println("Please wait a moment ...!");
+                                            Thread.sleep(3000);
+                                            System.out.println("Please follow us to meet the doctor...!");
+                                            String updateStatusQuery = "UPDATE `patient` SET `isFinished` = ? WHERE `appointment_code` = ?";
+                                            try(PreparedStatement statement1 = connection.prepareStatement(updateStatusQuery)) {
+                                              statement1.setBoolean(1,true);
+                                              statement1.setInt(2, code);
+                                              System.out.println("Appointment Finished...!");
+                                            }catch (SQLException e) {
+                                                System.out.println("Error : " + e.getMessage());
+                                            }
+                                        }
+                                        else{
+                                            System.out.println("Invalid Code...!");
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    System.out.println("Error : " + e.getMessage());
+                                }
+                               break; 
+                            }
+                            case 3->{
+                                System.exit(0);
                             }
                         }
                     }while(subOption != 3);
